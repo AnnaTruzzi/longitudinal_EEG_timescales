@@ -35,43 +35,45 @@ if __name__ == '__main__':
 
     #group='base' # or 'validation'
     group='validation'
-    comparison_across_groups=False
-    comparison_within_adults=False
+        
+    comparison_across_groups=True
+    comparison_within_adults=True
     linear_model_analysis=True
 
     timepoints = [6,9,16,'adults']
-    adult_conditions = ['video','eyes_open','eyes_closed']
     rootpth = '/eeg/ITS_Project_NewPreproc'
     
-
+    control_flag = '_envelope'
     if group=='base':
-        group_flag = ''
+        group_flag = '_exploratory'
     else:
         group_flag = '_validation'
-
+    infant_filename = f'/eeg/EEG_timescales/Data/tau_development{group_flag}_v4.csv'
+    adult_filename = '/eeg/EEG_timescales/Data/tau_development_adults_v4.csv'
+    adult_conditions = ['video','eyes_open','eyes_closed']
 
     if comparison_across_groups:
         tau_dict = {}
-        infant_data = pd.read_csv(f'/eeg/EEG_timescales/Data/develop_tau{group_flag}_v3.csv')
+        infant_data = pd.read_csv(infant_filename)
         infant_data = infant_data[(infant_data['pernan']<0.25) & (infant_data['event']!= 9999)]
         infant_data_mean = infant_data.groupby(['ses_age','channel']).mean()[['tauimp']]
         ses_age = [i[0] for i in infant_data_mean.index]
         infant_data_mean['ses_age'] = ses_age
         channel = [i[1] for i in infant_data_mean.index]
         infant_data_mean['channel'] = channel
-        adult_data = pd.read_csv(f'/eeg/EEG_timescales/Data/adult_tau_v3.csv')
+        adult_data = pd.read_csv(adult_filename)
         adult_data = adult_data[adult_data['pernan']<0.25]
         adult_data.loc[adult_data.event=='2222','event'] = 'video'
         for cond in adult_conditions:
             adult_data_cond=adult_data[adult_data['event']==cond]
             adult_data_mean = adult_data_cond.groupby('channel').mean()[['tauimp']]
             adult_data_mean['ses_age']=np.repeat('adults',adult_data_mean.shape[0])
-            channel_adult = [i[0] for i in adult_data_mean.index]
+            channel_adult = [i for i in adult_data_mean.index]
             adult_data_mean['channel'] = channel_adult
             all_tau = pd.concat([infant_data_mean, adult_data_mean], ignore_index=True)
             all_tau = all_tau.rename(columns={"tauimp": "tau"})
 
-            with open(f'//eeg/EEG_timescales/Results/tau_across_groups_analysis_adult{cond}{group_flag}.txt', 'w') as f:
+            with open(f'/eeg/EEG_timescales/Results/tau_across_groups_analysis_adult{cond}{group_flag}{control_flag}.txt', 'w') as f:
                 statistic,p = kruskal(all_tau[all_tau['ses_age']==6]['tau'],all_tau[all_tau['ses_age']==9]['tau'],all_tau[all_tau['ses_age']==16]['tau'],all_tau[all_tau['ses_age']=='adults']['tau'])
                 print(statistic,p)
                 f.write(f'\n Kruskal test: chi = {statistic}, p = {round(p,3)} \n')
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     if comparison_within_adults:
         tau_list=[]
         event_list=[]
-        data = pd.read_csv(f'/eeg/EEG_timescales/Data/adult_tau_v3.csv')
+        data = pd.read_csv(adult_filename)
         data = data[data['pernan']<0.25]
         data.loc[data.event=='2222','event'] = 'video'
         data = data.rename(columns={"tauimp": "tau"})
@@ -107,7 +109,15 @@ if __name__ == '__main__':
         all_tau_dict = {'cond_name':event_list,'tau':tau_list}
         all_tau=pd.DataFrame(all_tau_dict)
 
-        with open(f'//eeg/EEG_timescales/Results/tau_across_adult conditions.txt', 'w') as f:
+        my_palette=['#c04e01','#c04e01','#c04e01']
+        ax=sns.boxplot(data=all_tau,x='cond_name',y='tau',palette=my_palette)
+        ax.set_xticklabels(['video','eyes open','eyes closed'])
+        ax.text((1), 0.55, "***", ha='center', va='bottom',fontsize = 20)    
+        plt.savefig(f'/eeg/EEG_timescales/Figure/boxplot_tau_adults_conditions_pipelineversion{control_flag}.png')
+        plt.close()
+
+
+        with open(f'//eeg/EEG_timescales/Results/tau_across_adult conditions{control_flag}.txt', 'w') as f:
             statistic,p = kruskal(all_tau[all_tau['cond_name']=='video']['tau'],all_tau[all_tau['cond_name']=='eyes_open']['tau'],all_tau[all_tau['cond_name']=='eyes_closed']['tau'])
             print(statistic,p)
             f.write(f'\n Kruskal test: chi = {statistic}, p = {round(p,4)} \n')
@@ -130,12 +140,12 @@ if __name__ == '__main__':
         alpha=0.05
         betas_dict = {}
         rsquared_dict = {}
-        adult_data = pd.read_csv(f'/eeg/EEG_timescales/Data/adult_tau_v3.csv')
+        adult_data = pd.read_csv(adult_filename)
         adult_data = adult_data[adult_data['pernan']<0.25]
         adult_data.loc[adult_data.event=='2222','event'] = 'video'
         channels=len(adult_data['channel'].unique())
         adult_data = adult_data.rename(columns={"tauimp": "tau"})
-        infant_data_all = pd.read_csv(f'/eeg/EEG_timescales/Data/develop_tau{group_flag}_v3.csv')
+        infant_data_all = pd.read_csv(infant_filename)
         infant_data_all = infant_data_all[(infant_data_all['pernan']<0.25) & (infant_data_all['event']!= 9999)]
         infant_data_all = infant_data_all.rename(columns={"tauimp": "tau"})       
         for t in timepoints:
@@ -150,6 +160,7 @@ if __name__ == '__main__':
                     betas_timepoint[cond] = betas_cond
                     rsquared_timepoint[cond] = rsquared
 
+
                     s,p_norm=shapiro(np.array(betas_cond))
 
                     if p_norm<0.05:
@@ -159,26 +170,28 @@ if __name__ == '__main__':
 
                     sns.displot(np.array(betas_cond))
                     plt.suptitle(f'betas for adult {cond} vs infant {t} \n normality: s={round(s,3)}, p={round(p_norm,4)} - ttest={round(ttest,2)}, p={round(p,4)}')
-                    plt.savefig(f'/eeg/EEG_timescales/Figure/nobootstrapping_betas_distribution_{cond}_{t}.png')
+                    plt.savefig(f'/eeg/EEG_timescales/Figure/nobootstrapping_betas_distribution_{cond}_{t}{control_flag}.png')
                     plt.close()
 
                 betas_dict[t] = betas_timepoint
                 rsquared_dict[t] = rsquared_timepoint
 
-        with open (f'/eeg/EEG_timescales/Results/betas_linear_model_adult_simpleregression{group_flag}.pickle','wb') as handle:
+        with open (f'/eeg/EEG_timescales/Results/betas_linear_model_adult_simpleregression{group_flag}{control_flag}.pickle','wb') as handle:
             pickle.dump(betas_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
-        month_column = np.concatenate((np.repeat(list(betas_dict.keys())[0],betas_dict[list(betas_dict.keys())[0]]['video'].shape[0]*3),np.repeat(list(betas_dict.keys())[1],betas_dict[list(betas_dict.keys())[1]]['video'].shape[0]*3),np.repeat(list(betas_dict.keys())[2],betas_dict[list(betas_dict.keys())[2]]['video'].shape[0]*3)))
-        cond_column = np.concatenate((np.repeat(['video','eyes_open','eyes_closed'],betas_dict[list(betas_dict.keys())[0]]['video'].shape[0]),np.repeat(['video','eyes_open','eyes_closed'],betas_dict[list(betas_dict.keys())[1]]['video'].shape[0]),np.repeat(['video','eyes_open','eyes_closed'],betas_dict[list(betas_dict.keys())[2]]['video'].shape[0])))
+
+        month_column = np.concatenate((np.repeat(list(betas_dict.keys())[0],betas_dict[list(betas_dict.keys())[0]]['eyes_closed'].shape[0]*3),np.repeat(list(betas_dict.keys())[1],betas_dict[list(betas_dict.keys())[1]]['eyes_closed'].shape[0]*3),np.repeat(list(betas_dict.keys())[2],betas_dict[list(betas_dict.keys())[2]]['eyes_closed'].shape[0]*3)))
+        cond_column = np.concatenate((np.repeat(adult_conditions,betas_dict[list(betas_dict.keys())[0]]['eyes_closed'].shape[0]),np.repeat(adult_conditions,betas_dict[list(betas_dict.keys())[1]]['eyes_closed'].shape[0]),np.repeat(adult_conditions,betas_dict[list(betas_dict.keys())[2]]['eyes_closed'].shape[0])))
         betas_column = np.concatenate((betas_dict[list(betas_dict.keys())[0]]['video'],betas_dict[list(betas_dict.keys())[0]]['eyes_open'],betas_dict[list(betas_dict.keys())[0]]['eyes_closed'],betas_dict[list(betas_dict.keys())[1]]['video'],betas_dict[list(betas_dict.keys())[1]]['eyes_open'],betas_dict[list(betas_dict.keys())[1]]['eyes_closed'],betas_dict[list(betas_dict.keys())[2]]['video'],betas_dict[list(betas_dict.keys())[2]]['eyes_open'],betas_dict[list(betas_dict.keys())[2]]['eyes_closed']))
         rsquared_column = np.concatenate((rsquared_dict[list(rsquared_dict.keys())[0]]['video'],rsquared_dict[list(rsquared_dict.keys())[0]]['eyes_open'],rsquared_dict[list(rsquared_dict.keys())[0]]['eyes_closed'],rsquared_dict[list(rsquared_dict.keys())[1]]['video'],rsquared_dict[list(rsquared_dict.keys())[1]]['eyes_open'],rsquared_dict[list(rsquared_dict.keys())[1]]['eyes_closed'],rsquared_dict[list(rsquared_dict.keys())[2]]['video'],rsquared_dict[list(rsquared_dict.keys())[2]]['eyes_open'],rsquared_dict[list(rsquared_dict.keys())[2]]['eyes_closed']))
+
         betas_df_dict = {'month': month_column,
                         'adult_cond': cond_column,
                         'beta': betas_column,
                         'rsquared':rsquared_column}
         
         betas_df = pd.DataFrame(betas_df_dict)
-        betas_df.to_csv(f'/eeg/EEG_timescales/Results/betas_linear_model_adult_simpleregression{group_flag}.csv')
+        betas_df.to_csv(f'/eeg/EEG_timescales/Results/betas_linear_model_adult_simpleregression{group_flag}{control_flag}.csv')
 
-        linear_model_pipeline.compute_stats(betas_dict,rsquared_dict,alpha,group_flag)                   
+        linear_model_pipeline.compute_stats(betas_dict,rsquared_dict,alpha,group_flag,control_flag)                   
 

@@ -52,13 +52,13 @@ def compute_betas_and_rsquared(adult_data,infant_data,channels):
     return betas_out,rsquared_out
 
 
-def compute_stats(betas_dict, rsquared_dict, alpha, group_flag):
-    combinations = ['video-eyes_open','video-eyes_closed','eyes_open-eyes_closed']
+def compute_stats(betas_dict, rsquared_dict, alpha, group_flag,control_flag):
     timepoints= [6,9,16]
     conditions= ['video','eyes_open','eyes_closed']
-    with open(f'/eeg/EEG_timescales/Results/nobootstrapping_linear_model_adult_comparison_allstats_pipeline{group_flag}.txt','a') as f:
+    combinations = ['video-eyes_open','video-eyes_closed','eyes_open-eyes_closed']
+    with open(f'/eeg/EEG_timescales/Results/nobootstrapping_linear_model_adult_comparison_allstats_pipeline{group_flag}{control_flag}.txt','a') as f:
         for t in timepoints:
-            f.write(f'\n ##### {t} \n')  
+            f.write(f'\n ##### {t} {control_flag}\n')  
             f.write(f'Corrected alpha = {alpha/3} \n')
             betas=betas_dict[t]
             rsquared=rsquared_dict[t]
