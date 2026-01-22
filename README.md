@@ -47,7 +47,7 @@ Below is a suggested order. Make sure all dependencies (e.g. `numpy`, `pandas`, 
     Datasets for the alpha features are too heavy to be shared on Github, please contact the corresponding author (Dr. Anna Truzzi, a.truzzi@qub.ac.uk) to request them.
 
 5. **Comparison with adults**
-    python 4_eeg_ITS_GroupComparisons&LinearModels_pipeline.py
+    python 6_eeg_ITS_GroupComparisons&LinearModels_pipeline_envelop.py
     This takes the precomputed subject-level metrics and runs the comparisons and linear models between infants and adults.
 
 
