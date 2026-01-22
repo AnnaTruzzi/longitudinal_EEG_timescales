@@ -11,7 +11,7 @@ This repository contains the data and code used to produce the results published
 | `3_eeg_intrinsic_timescales_estimation_pipeline.py` | Main pipeline to estimate intrinsic timescales per subject, handle outliers, and aggregate results |
 | `4_Tau_Development_LMMAnalysis.R` | Runs mixed models to trace developmental trajectory from 6 to 16 months|
 | `5_Tau_Correlations_AlphaProperties.R` | Investigates associations with rhythm features|
-| `6_eeg_ITS_GroupComparisons&LinearModels_pipeline.py` | Runs group comparisons and linear models predicting infant data from adult patterns |
+| `6_eeg_ITS_GroupComparisons&LinearModels_pipeline_envelop.py` | Runs group comparisons and linear models predicting infant data from adult patterns |
 | `linear_model_pipeline.py` | Helper script for more general linear modeling |
 | `tau_estimate.py` | Functions relating to estimating tau / intrinsic timescales metrics |
 | `LICENSE` | MIT license for reuse and redistribution |
