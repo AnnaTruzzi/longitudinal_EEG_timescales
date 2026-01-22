@@ -35,6 +35,7 @@ if __name__ == '__main__':
 
     #group='base' # or 'validation'
     group='validation'
+    control_condition = '_envelope'
         
     comparison_across_groups=True
     comparison_within_adults=True
@@ -43,6 +44,7 @@ if __name__ == '__main__':
     timepoints = [6,9,16,'adults']
     rootpth = '/eeg/ITS_Project_NewPreproc'
     
+
     control_flag = '_envelope'
     if group=='base':
         group_flag = '_exploratory'
